@@ -5,10 +5,10 @@ import java.util.Random;
 
 public class Block {
 
-    private int id;
-    private long timeStamp;
+    private final int id;
+    private final long timeStamp;
     private int magic;
-    private String previousHash;
+    private final String previousHash;
     private String hash;
 
     public Block(int minLeadingZeros) {
@@ -55,12 +55,10 @@ public class Block {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Block:\nId: ").append(id);
-        sb.append("\nTimestamp: ").append(timeStamp);
-        sb.append("\nMagic number: ").append(magic);
-        sb.append("\nHash of the previous block:\n").append(previousHash);
-        sb.append("\nHash of the block:\n").append(hash);
-        return sb.toString();
+        return "Block:\nId: " + id +
+               "\nTimestamp: " + timeStamp +
+               "\nMagic number: " + magic +
+               "\nHash of the previous block:\n" + previousHash +
+               "\nHash of the block:\n" + hash;
     }
 }

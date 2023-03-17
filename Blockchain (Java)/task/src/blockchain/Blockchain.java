@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Blockchain {
 
-    private List<Block> blockchain = new ArrayList<>();
+    private final List<Block> blockchain = new ArrayList<>();
 
     public void generateBlock(int minLeadingZeros) {
         int curLen = blockchain.size();
