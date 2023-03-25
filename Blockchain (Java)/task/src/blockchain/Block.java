@@ -3,25 +3,24 @@ package blockchain;
 import java.util.Date;
 import java.util.Random;
 
+import static java.lang.Math.random;
+import static java.lang.Math.round;
+import static java.lang.Math.toIntExact;
+
 public class Block {
 
+    private final int miner;
     private final int id;
     private final long timeStamp;
     private int magic;
     private final String previousHash;
     private String hash;
 
-    public Block(int minLeadingZeros) {
-        timeStamp = new Date().getTime();
-        id = 1;
-        previousHash = "0";
-        setHash(minLeadingZeros);
-    }
-
     public Block(Block previousBlock, int minLeadingZeros) {
         timeStamp = new Date().getTime();
-        id = previousBlock.id + 1;
-        previousHash = previousBlock.hash;
+        miner = toIntExact(round(random()*10));
+        id = previousBlock == null ? 1 : previousBlock.id + 1;
+        previousHash = previousBlock == null ? "0" : previousBlock.hash;
         setHash(minLeadingZeros);
     }
 
@@ -29,7 +28,7 @@ public class Block {
         Random r = new Random();
         do {
             magic = r.nextInt();
-            hash = StringUtil.applySha256(id + timeStamp + magic + previousHash);
+            hash = StringUtil.applySha256(id + timeStamp + miner + magic + previousHash);
         } while (!hash.startsWith("0".repeat(minLeadingZeros)));
     }
 
@@ -55,7 +54,9 @@ public class Block {
 
     @Override
     public String toString() {
-        return "Block:\nId: " + id +
+        return "Block:" +
+               "\nCreated by miner # " + miner +
+               "\nId: " + id +
                "\nTimestamp: " + timeStamp +
                "\nMagic number: " + magic +
                "\nHash of the previous block:\n" + previousHash +
