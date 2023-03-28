@@ -3,9 +3,7 @@ package blockchain;
 import java.util.Date;
 import java.util.Random;
 
-import static java.lang.Math.random;
-import static java.lang.Math.round;
-import static java.lang.Math.toIntExact;
+import static blockchain.StringUtil.applySha256;
 
 public class Block {
 
@@ -16,9 +14,9 @@ public class Block {
     private final String previousHash;
     private String hash;
 
-    public Block(Block previousBlock, int minLeadingZeros) {
+    public Block(Block previousBlock, int minLeadingZeros, int miner) {
         timeStamp = new Date().getTime();
-        miner = toIntExact(round(random()*10));
+        this.miner = miner;
         id = previousBlock == null ? 1 : previousBlock.id + 1;
         previousHash = previousBlock == null ? "0" : previousBlock.hash;
         setHash(minLeadingZeros);
@@ -28,7 +26,7 @@ public class Block {
         Random r = new Random();
         do {
             magic = r.nextInt();
-            hash = StringUtil.applySha256(id + timeStamp + miner + magic + previousHash);
+            hash = applySha256(stringify());
         } while (!hash.startsWith("0".repeat(minLeadingZeros)));
     }
 
@@ -50,6 +48,14 @@ public class Block {
 
     public String getHash() {
         return hash;
+    }
+
+    public boolean isValidHash() {
+        return applySha256(stringify()).equals(hash);
+    }
+
+    private String stringify() {
+        return id + timeStamp + miner + magic + previousHash;
     }
 
     @Override
