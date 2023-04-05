@@ -1,23 +1,33 @@
 package blockchain;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class Main {
+
+    private static final List<String> names = List.of("Alice", "Bob", "Cindy", "David", "Elizabeth");
+
     public static void main(String[] args) throws InterruptedException {
 
         Blockchain blockchain = new Blockchain();
 
-        int threadCount = Math.min(Runtime.getRuntime().availableProcessors(), 10);
-        ExecutorService es = Executors.newFixedThreadPool(threadCount);
+        int minerCount = Math.min(Runtime.getRuntime().availableProcessors(), 5);
+        if (minerCount < 2) minerCount = 2;
+        int personCount = names.size();
+        ExecutorService es = Executors.newFixedThreadPool(minerCount + personCount);
 
-        for (int i = 0; i < threadCount; i++) {
+        for (int i = 0; i < personCount; i++) {
+            es.submit(new MessageSender(blockchain, new Person(names.get(i))));
+        }
+
+        for (int i = 0; i < minerCount; i++) {
             es.submit(new Miner(blockchain, i));
         }
 
         while (blockchain.isAcceptingNewBlocks())
-            TimeUnit.SECONDS.sleep(8);
+            TimeUnit.SECONDS.sleep(2);
 
         es.shutdownNow();
 

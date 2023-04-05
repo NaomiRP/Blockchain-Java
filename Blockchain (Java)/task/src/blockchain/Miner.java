@@ -12,7 +12,7 @@ public class Miner implements Runnable {
 
     public void run() {
         while (blockchain.isAcceptingNewBlocks()) {
-            blockchain.addBlockToChain(new Block(blockchain.lastBlock(), blockchain.requiredZeros(), id));
+            blockchain.addBlockToChain(new Block(blockchain.lastBlock(), blockchain.requiredZeros(), id, blockchain.queuedMessages()));
         }
     }
 }
