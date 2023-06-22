@@ -3,7 +3,6 @@ package blockchain;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 
 import static blockchain.StringUtil.applySha256;
 

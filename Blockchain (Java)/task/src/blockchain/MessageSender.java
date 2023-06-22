@@ -17,7 +17,7 @@ public class MessageSender implements Runnable {
     public void run() {
         var r = new Random();
         while (blockchain.isAcceptingNewBlocks()) {
-            blockchain.queueMessage(new Message(sender));
+            blockchain.queueMessage(new Message(sender, blockchain.getNextMessageId()));
             try {
                 TimeUnit.MILLISECONDS.sleep(r.nextInt(100));
             } catch (InterruptedException e) {

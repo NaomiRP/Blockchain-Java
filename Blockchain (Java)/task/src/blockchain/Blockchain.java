@@ -43,8 +43,15 @@ public class Blockchain {
         return List.copyOf(messageQueue);
     }
 
-    public synchronized void queueMessage(Message message) {
+    public synchronized boolean queueMessage(Message message) {
+        if (message.getId() != messageQueue.size() + 1 || !message.verifySignature())
+            return false;
         messageQueue.add(message);
+        return true;
+    }
+
+    public synchronized int getNextMessageId() {
+        return messageQueue.size() + 1;
     }
 
     private boolean updateMessageQueue(List<Message> messagesToDequeue) {
