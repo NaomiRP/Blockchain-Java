@@ -21,7 +21,30 @@ public class Person {
         return keyPair.getPublic();
     }
 
-    byte[] signMessage(String messageData) {
-        return SignatureUtil.sign(messageData, keyPair.getPrivate());
+    byte[] signTransaction(String transactionData) {
+        return SignatureUtil.sign(transactionData, keyPair.getPrivate());
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Person person = (Person) o;
+
+        if (!name.equals(person.name)) return false;
+        return keyPair.equals(person.keyPair);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + keyPair.hashCode();
+        return result;
     }
 }

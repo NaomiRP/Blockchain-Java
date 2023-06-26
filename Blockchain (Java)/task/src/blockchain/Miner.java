@@ -3,16 +3,16 @@ package blockchain;
 public class Miner implements Runnable {
 
     private final Blockchain blockchain;
-    private final int id;
+    private final Person miner;
 
-    public Miner(Blockchain blockchain, int id) {
+    public Miner(Blockchain blockchain, Person miner) {
         this.blockchain = blockchain;
-        this.id = id;
+        this.miner = miner;
     }
 
     public void run() {
         while (blockchain.isAcceptingNewBlocks()) {
-            blockchain.addBlockToChain(new Block(blockchain.lastBlock(), blockchain.requiredZeros(), id, blockchain.queuedMessages()));
+            blockchain.addBlockToChain(new Block(blockchain.lastBlock(), blockchain.requiredZeros(), miner, blockchain.queuedTransactions()));
         }
     }
 }

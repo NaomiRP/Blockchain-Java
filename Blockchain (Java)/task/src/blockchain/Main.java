@@ -16,18 +16,22 @@ public class Main {
         int minerCount = Math.min(Runtime.getRuntime().availableProcessors(), 5);
         if (minerCount < 2) minerCount = 2;
         int personCount = names.size();
-        ExecutorService es = Executors.newFixedThreadPool(minerCount + personCount);
+        ExecutorService es = Executors.newFixedThreadPool((minerCount * 2) + personCount);
 
         for (int i = 0; i < personCount; i++) {
-            es.submit(new MessageSender(blockchain, new Person(names.get(i))));
+            Person p = new Person(names.get(i));
+            es.submit(new TransactionGenerator(blockchain, p));
+            blockchain.addParticipant(p);
         }
 
-        for (int i = 0; i < minerCount; i++) {
-            es.submit(new Miner(blockchain, i));
+        for (int i = 1; i <= minerCount; i++) {
+            Person miner = new Person("miner" + i);
+            es.submit(new TransactionGenerator(blockchain, miner));
+            es.submit(new Miner(blockchain, miner));
         }
 
         while (blockchain.isAcceptingNewBlocks())
-            TimeUnit.SECONDS.sleep(2);
+            TimeUnit.SECONDS.sleep(1);
 
         es.shutdownNow();
 

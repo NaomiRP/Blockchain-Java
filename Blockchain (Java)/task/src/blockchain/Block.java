@@ -8,18 +8,18 @@ import static blockchain.StringUtil.applySha256;
 
 public class Block {
 
-    private final int miner;
+    private final Person miner;
     private final int id;
     private final long timeStamp;
     private int magic;
     private final String previousHash;
-    private final List<Message> messages;
+    private final List<Transaction> transactions;
     private String hash;
 
-    public Block(Block previousBlock, int minLeadingZeros, int miner, List<Message> messages) {
+    public Block(Block previousBlock, int minLeadingZeros, Person miner, List<Transaction> transactions) {
         timeStamp = new Date().getTime();
         this.miner = miner;
-        this.messages = messages;
+        this.transactions = transactions;
         id = previousBlock == null ? 1 : previousBlock.id + 1;
         previousHash = previousBlock == null ? "0" : previousBlock.hash;
         setHash(minLeadingZeros);
@@ -33,24 +33,20 @@ public class Block {
         } while (!hash.startsWith("0".repeat(minLeadingZeros)));
     }
 
+    public Person getMiner() {
+        return miner;
+    }
+
     public int getId() {
         return id;
-    }
-
-    public long getTimeStamp() {
-        return timeStamp;
-    }
-
-    public int getMagicNumber() {
-        return magic;
     }
 
     public String getPreviousHash() {
         return previousHash;
     }
 
-    public List<Message> getMessages() {
-        return messages;
+    public List<Transaction> getTransactions() {
+        return transactions;
     }
 
     public String getHash() {
@@ -62,23 +58,24 @@ public class Block {
     }
 
     private String stringify() {
-        return id + timeStamp + miner + magic + previousHash + stringifyMessages(";");
+        return id + timeStamp + miner.getName() + magic + previousHash + stringifyTransactions(";");
     }
 
-    private String stringifyMessages(String delimiter) {
-        List<String> messageStrings = messages.stream().map(Message::toString).toList();
+    private String stringifyTransactions(String delimiter) {
+        List<String> messageStrings = transactions.stream().map(Transaction::toString).toList();
         return String.join(delimiter, messageStrings);
     }
 
     @Override
     public String toString() {
         return "Block:" +
-               "\nCreated by miner # " + miner +
+               "\nCreated by " + miner +
+               "\n" + miner + " gets 100 VC" +
                "\nId: " + id +
                "\nTimestamp: " + timeStamp +
                "\nMagic number: " + magic +
                "\nHash of the previous block:\n" + previousHash +
                "\nHash of the block:\n" + hash +
-               "\nBlock data: " + (messages.size() == 0 ? "no messages" : "\n" + stringifyMessages("\n"));
+               "\nBlock data: " + (transactions.size() == 0 ? "no messages" : "\n" + stringifyTransactions("\n"));
     }
 }

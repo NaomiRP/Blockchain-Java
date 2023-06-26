@@ -2,9 +2,7 @@ package blockchain;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class Blockchain {
 
@@ -12,14 +10,16 @@ public class Blockchain {
 
     private int nLeadingZeros = 0;
     private Instant lastBlockAccepted = Instant.now();
-    private final List<Message> messageQueue = new ArrayList<>();
+    private final List<Transaction> transactionQueue = new ArrayList<>();
+    private final Set<Person> participants = new HashSet<>();
+    private final Map<Person, Integer> vcBalance = new HashMap<>();
 
-    private void adjustGenerationComplexity(long genTime) {
-        System.out.println("Block was generating for " + genTime + " seconds");
-        if (genTime > 12 && nLeadingZeros > 0) {
+    private void adjustGenerationComplexity(long genTimeMillis) {
+        System.out.println("Block was generating for " + ((int) genTimeMillis / 1000) + " seconds");
+        if (genTimeMillis > 2500 && nLeadingZeros > 0) {
             nLeadingZeros--;
             System.out.println("N was decreased to " + nLeadingZeros + "\n");
-        } else if (genTime < 5) {
+        } else if (genTimeMillis < 500 && nLeadingZeros < 4) {
             nLeadingZeros++;
             System.out.println("N was increased to " + nLeadingZeros + "\n");
         } else {
@@ -28,7 +28,7 @@ public class Blockchain {
     }
 
     public synchronized boolean isAcceptingNewBlocks() {
-        return blockchain.size() < 5;
+        return blockchain.size() < 15;
     }
 
     public synchronized Block lastBlock() {
@@ -39,34 +39,50 @@ public class Blockchain {
         return nLeadingZeros;
     }
 
-    public synchronized List<Message> queuedMessages() {
-        return List.copyOf(messageQueue);
+    public synchronized void addParticipant(Person participant) {
+        participants.add(participant);
     }
 
-    public synchronized boolean queueMessage(Message message) {
-        if (message.getId() != messageQueue.size() + 1 || !message.verifySignature())
-            return false;
-        messageQueue.add(message);
-        return true;
+    public synchronized Person getRandomParticipant(Person excluded) {
+        return participants.stream().filter(person -> !person.equals(excluded)).unordered().toList().get(0);
     }
 
-    public synchronized int getNextMessageId() {
-        return messageQueue.size() + 1;
+    public synchronized int getAvailableBalance(Person person) {
+        return vcBalance.getOrDefault(person, 0);
     }
 
-    private boolean updateMessageQueue(List<Message> messagesToDequeue) {
+    private synchronized void updateBalance(Person person, int amountToAdd) {
+        int prevAmount = vcBalance.getOrDefault(person, 0);
+        vcBalance.put(person, prevAmount + amountToAdd);
+    }
+
+    public synchronized List<Transaction> queuedTransactions() {
+        return List.copyOf(transactionQueue);
+    }
+
+    public synchronized void queueTransaction(Transaction transaction) {
+        if (transaction.getId() != transactionQueue.size() + 1 || !transaction.verifySignature())
+            return;
+        transactionQueue.add(transaction);
+    }
+
+    public synchronized int getNextTransactionId() {
+        return transactionQueue.size() + 1;
+    }
+
+    private boolean updateTransactionQueue(List<Transaction> messagesToDequeue) {
         int dequeueSize = messagesToDequeue.size();
         if (dequeueSize == 0)
             return true;
-        int queueSize = messageQueue.size();
+        int queueSize = transactionQueue.size();
         if (dequeueSize > queueSize)
             return false;
         if (dequeueSize == queueSize) {
-            messageQueue.clear();
+            transactionQueue.clear();
             return true;
         }
         //dequeueSize < queueSize
-        messageQueue.subList(0, dequeueSize).clear();
+        transactionQueue.subList(0, dequeueSize).clear();
         return true;
     }
 
@@ -74,13 +90,25 @@ public class Blockchain {
         Instant blockSubmitted = Instant.now();
         if (!(blockValid(block, lastBlock()) && acceptableHash(block) && isAcceptingNewBlocks()))
             return;
-        if (!updateMessageQueue(block.getMessages()))
+        if (!updateTransactionQueue(block.getTransactions()))
             return;
         blockchain.add(block);
         System.out.println(block);
-        long genTime = Duration.between(lastBlockAccepted, blockSubmitted).getSeconds();
+        long genTime = Duration.between(lastBlockAccepted, blockSubmitted).toMillis();
         adjustGenerationComplexity(genTime);
         lastBlockAccepted = Instant.now();
+
+        Person miner = block.getMiner();
+        addParticipant(miner);
+        updateBalances(block);
+    }
+
+    private synchronized void updateBalances(Block block) {
+        updateBalance(block.getMiner(), 100);
+        for (Transaction transaction : block.getTransactions()) {
+            updateBalance(transaction.getSender(), -1 * transaction.getAmount());
+            updateBalance(transaction.getRecipient(), transaction.getAmount());
+        }
     }
 
     public synchronized boolean isValid() {
@@ -92,6 +120,10 @@ public class Blockchain {
             prev = cur;
             cur = blockchain.get(i);
             if (!blockValid(cur, prev))
+                return false;
+        }
+        for (Integer balance: vcBalance.values()){
+            if (balance < 0)
                 return false;
         }
         return true;
